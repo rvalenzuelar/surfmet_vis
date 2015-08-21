@@ -11,11 +11,13 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
+import Thermodyn as thermo
 import os
 
 ''' set color codes in seaborn '''
 sns.set_color_codes()
 
+''' set directory and input files '''
 base_directory='/home/rvalenzuela/SURFACE'
 print base_directory
 usr_case = raw_input('\nIndicate case number (i.e. 1): ')
@@ -33,13 +35,12 @@ file_met=[]
 for f in files:
 	if f[:3]==usr_location:
 		file_met.append(casedir+'/'+f)
-
 name_field=['press','temp','rh','wspd','wdir','precip','mixr']
 if usr_location=='bby':
-	index_field=[3,6,9,10,12,17,26] # bby
+	index_field=[3,6,9,10,12,17,26]
 	locname='Bodega Bay'
 elif usr_location=='czc':
-	index_field=[3,4,5,6,8,13,23] # czc
+	index_field=[3,4,5,6,8,13,22]
 	locname='Cazadero'
 
 def main():
@@ -54,6 +55,7 @@ def main():
 		meteo=df[0]
 
 	make_plot(meteo)
+	make_thermo(meteo)
 
 def parse_dataframe(file_met):
 
@@ -80,7 +82,13 @@ def parse_dataframe(file_met):
 	preciph = meteo.precip.groupby(hour).sum()
 	meteo = meteo.join(preciph, how='outer', rsuffix='h')
 
-	''' assign metadata '''
+	''' add thermodynamics '''
+	theta = thermo.theta(C=meteo.temp,hPa=meteo.press)
+	thetaeq = thermo.theta_equiv(C=meteo.temp,hPa=meteo.press)
+	meteo.loc[:,'theta'] = pd.Series(theta,index=meteo.index)	
+	meteo.loc[:,'thetaeq'] = pd.Series(thetaeq,index=meteo.index)	
+
+	''' assign metadata (prototype, not really used) '''
 	units = {'press':'mb', 'temp':'C', 'rh':'%', 'wspd':'m s-1', 'wdir':'deg', 'precip':'mm', 'mixr': 'g kg-1'}
 	agl = {'press':'NaN', 'temp':'10 m', 'rh':'10 m', 'wspd':'NaN', 'wdir':'NaN', 'precip':'NaN', 'mixr': 'NaN'}
 	for n in name_field:
@@ -102,7 +110,7 @@ def make_plot(meteo):
 	precip = meteo.preciph
 
 	labsize=15
-	fig, ax = plt.subplots(4,sharex=True,figsize=(12,10))
+	fig, ax = plt.subplots(4,sharex=True,figsize=(8.5,11))
 	ax[0].plot(x , temp)	
 	ax[0].set_ylabel('Temperature [C]',color='b',fontsize=labsize)
 	ax[0].invert_xaxis()
@@ -127,6 +135,35 @@ def make_plot(meteo):
 
 	plt.draw()
 
+def make_thermo(meteo):
+
+	x =meteo.index
+	theta = pd.rolling_mean(meteo.theta,10)
+	thetaeq = pd.rolling_mean(meteo.thetaeq,10)
+	mixr = pd.rolling_mean(meteo.mixr,10)
+
+
+	labsize=15
+	fig, ax = plt.subplots(3,sharex=True,figsize=(8.5,11))
+	ax[0].plot(x , theta)	
+	ax[0].set_ylabel('Theta [K]',color='b',fontsize=labsize)
+	ax[0].invert_xaxis()
+	ax[1].plot(x ,thetaeq)
+	ax[1].set_ylabel('Theta eq. [K]',color='b',fontsize=labsize)	
+	ax[2].plot(x, mixr)
+	ax[2].set_ylabel('Miging ratio [g/kg]',color='b',fontsize=labsize)		
+	# ax[2].yaxis.set_major_formatter(mticker.ScalarFormatter(useOffset=False))
+	# ax[3].plot(x, precip,'o')
+	# ax[3].set_ylabel('Rain rate [mm h-1]',color='b',fontsize=labsize)	
+	ax[2].xaxis.set_major_formatter(mdates.DateFormatter('%d-%H'))
+	ax[2].set_xlabel(r'$\Leftarrow$'+' Time (UTC)')
+	
+	l1='Surface meteorology at '+ locname
+	l2='\nStart time: '+x[0].strftime('%Y-%m-%d %H:%M')+' UTC'
+	l3='\nEnd time: '+x[-1].strftime('%Y-%m-%d %H:%M')+' UTC'
+	fig.suptitle(l1+l2+l3,y=0.98)
+
+	plt.draw()
 
 def add_second_yaxis(ax,x,y):
 	axt=ax.twinx()
@@ -137,5 +174,5 @@ def add_second_yaxis(ax,x,y):
 
 
 main()
-plt.show()
-# plt.show(block=False)
+# plt.show()
+plt.show(block=False)
