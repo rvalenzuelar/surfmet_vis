@@ -39,9 +39,11 @@ name_field=['press','temp','rh','wspd','wdir','precip','mixr']
 if usr_location=='bby':
 	index_field=[3,6,9,10,12,17,26]
 	locname='Bodega Bay'
+	locelevation = 15 # [m]
 elif usr_location=='czc':
 	index_field=[3,4,5,6,8,13,22]
 	locname='Cazadero'
+	locelevation = 462 # [m]
 
 def main():
 
@@ -54,7 +56,7 @@ def main():
 	else:
 		meteo=df[0]
 
-	make_plot(meteo)
+	make_meteo(meteo)
 	make_thermo(meteo)
 
 def parse_dataframe(file_met):
@@ -88,6 +90,11 @@ def parse_dataframe(file_met):
 	meteo.loc[:,'theta'] = pd.Series(theta,index=meteo.index)	
 	meteo.loc[:,'thetaeq'] = pd.Series(thetaeq,index=meteo.index)	
 
+	''' add sea level pressure '''
+	Tv = thermo.virtual_temperature(C=meteo.temp,mixing_ratio=meteo.mixr/1000.)
+	slp = thermo.sea_level_press(K=Tv+273.15, Pa=meteo.press*100, m=locelevation)
+	meteo.loc[:,'sea_levp']=slp
+
 	''' assign metadata (prototype, not really used) '''
 	units = {'press':'mb', 'temp':'C', 'rh':'%', 'wspd':'m s-1', 'wdir':'deg', 'precip':'mm', 'mixr': 'g kg-1'}
 	agl = {'press':'NaN', 'temp':'10 m', 'rh':'10 m', 'wspd':'NaN', 'wdir':'NaN', 'precip':'NaN', 'mixr': 'NaN'}
@@ -99,7 +106,7 @@ def parse_dataframe(file_met):
 
 	return meteo
 
-def make_plot(meteo):
+def make_meteo(meteo):
 
 	x =meteo.index
 	temp = pd.rolling_mean(meteo.temp,10)
@@ -108,26 +115,35 @@ def make_plot(meteo):
 	wdir = pd.rolling_mean(meteo.wdir,10)
 	press = meteo.press
 	precip = meteo.preciph
+	slp = meteo.sea_levp/100 # [hPa]
 
 	labsize=15
 	fig, ax = plt.subplots(4,sharex=True,figsize=(8.5,11))
 	ax[0].plot(x , temp)	
 	ax[0].set_ylabel('Temperature [C]',color='b',fontsize=labsize)
 	ax[0].invert_xaxis()
+	ax[0].set_ylim([3,13])
 	ax2=add_second_yaxis(ax[0], x, rh)
 	ax2.set_ylabel('RH [%]',color='g',fontsize=labsize)
+	ax2.set_ylim([50,105])
 	ax[1].plot(x ,wspd)
-	ax[1].set_ylabel('WSPD [ms-1]',color='b',fontsize=labsize)	
+	ax[1].set_ylabel('WSPD [ms-1]',color='b',fontsize=labsize)
+	ax[1].set_ylim([0,12])
 	ax2=add_second_yaxis(ax[1], x , wdir)
 	ax2.set_ylabel('WDIR [deg]',color='g',fontsize=labsize)	
+	ax2.set_ylim([50,350])	
 	ax[2].plot(x, press)
 	ax[2].set_ylabel('Pressure [hPa]',color='b',fontsize=labsize)		
 	ax[2].yaxis.set_major_formatter(mticker.ScalarFormatter(useOffset=False))
+	ax2=add_second_yaxis(ax[2], x , slp)
+	ax2.set_ylabel('Sea level pressure [hPa]',color='g',fontsize=labsize)	
+	ax2.set_ylim([1010,1022])
 	ax[3].plot(x, precip,'o')
 	ax[3].set_ylabel('Rain rate [mm h-1]',color='b',fontsize=labsize)	
 	ax[3].xaxis.set_major_formatter(mdates.DateFormatter('%d-%H'))
 	ax[3].set_xlabel(r'$\Leftarrow$'+' Time (UTC)')
-	
+	ax[3].set_ylim([0,12])	
+
 	l1='Surface meteorology at '+ locname
 	l2='\nStart time: '+x[0].strftime('%Y-%m-%d %H:%M')+' UTC'
 	l3='\nEnd time: '+x[-1].strftime('%Y-%m-%d %H:%M')+' UTC'
@@ -147,9 +163,11 @@ def make_thermo(meteo):
 	fig, ax = plt.subplots(3,sharex=True,figsize=(8.5,11))
 	ax[0].plot(x , theta)	
 	ax[0].set_ylabel('Theta [K]',color='b',fontsize=labsize)
+	ax[0].set_ylim([276,286])
 	ax[0].invert_xaxis()
 	ax[1].plot(x ,thetaeq)
 	ax[1].set_ylabel('Theta eq. [K]',color='b',fontsize=labsize)	
+	ax[1].set_ylim([287,307])
 	ax[2].plot(x, mixr)
 	ax[2].set_ylabel('Miging ratio [g/kg]',color='b',fontsize=labsize)		
 	# ax[2].yaxis.set_major_formatter(mticker.ScalarFormatter(useOffset=False))
@@ -157,6 +175,8 @@ def make_thermo(meteo):
 	# ax[3].set_ylabel('Rain rate [mm h-1]',color='b',fontsize=labsize)	
 	ax[2].xaxis.set_major_formatter(mdates.DateFormatter('%d-%H'))
 	ax[2].set_xlabel(r'$\Leftarrow$'+' Time (UTC)')
+	ax[2].set_ylim([4.,8.5])
+
 	
 	l1='Surface meteorology at '+ locname
 	l2='\nStart time: '+x[0].strftime('%Y-%m-%d %H:%M')+' UTC'
