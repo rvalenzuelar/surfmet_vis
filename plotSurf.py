@@ -90,7 +90,7 @@ def make_meteo(meteo):
 	ax2=add_second_yaxis(ax[2], x , slp)
 	ax2.set_ylabel('Sea level pressure [hPa]',color='g',fontsize=labsize)	
 	ax2.set_ylim([1010,1022])
-	ax[3].plot(x, precip,'o')
+	ax[3].plot(x+pd.Timedelta('30 minutes'), precip,'o')
 	ax[3].set_ylabel('Rain rate [mm h-1]',color='b',fontsize=labsize)	
 	ax[3].xaxis.set_major_formatter(mdates.DateFormatter('%d-%H'))
 	ax[3].set_xlabel(r'$\Leftarrow$'+' Time (UTC)')
@@ -100,7 +100,7 @@ def make_meteo(meteo):
 	l2='\nStart time: '+x[0].strftime('%Y-%m-%d %H:%M')+' UTC'
 	l3='\nEnd time: '+x[-1].strftime('%Y-%m-%d %H:%M')+' UTC'
 	fig.suptitle(l1+l2+l3,y=0.98)
-
+	plt.subplots_adjust(hspace = 0.08)
 	plt.draw()
 
 def make_thermo(meteo):
@@ -134,7 +134,7 @@ def make_thermo(meteo):
 	l2='\nStart time: '+x[0].strftime('%Y-%m-%d %H:%M')+' UTC'
 	l3='\nEnd time: '+x[-1].strftime('%Y-%m-%d %H:%M')+' UTC'
 	fig.suptitle(l1+l2+l3,y=0.98)
-
+	plt.subplots_adjust(hspace = 0.08)
 	plt.draw()
 
 def add_second_yaxis(ax,x,y):
