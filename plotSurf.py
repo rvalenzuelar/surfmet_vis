@@ -12,51 +12,92 @@ import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
 import Meteoframes as mf
 import os
+import sys
+import numpy as np
 
 ''' set color codes in seaborn '''
 sns.set_color_codes()
 
 ''' set directory and input files '''
-base_directory='/home/rvalenzuela/SURFACE'
+# base_directory='/home/rvalenzuela/SURFACE'
+base_directory='/Users/raulv/Documents/SURFACE'
 print base_directory
 usr_case = raw_input('\nIndicate case number (i.e. 1): ')
 case='case'+usr_case.zfill(2)
 casedir=base_directory+'/'+case
 out=os.listdir(casedir)
 out.sort()
+
 files=[]
 for f in out:
 	if f[-3:]=='met': 
 		print f
 		files.append(f)
-usr_location = raw_input('\nIndicate location (i.e. bby): ')
-file_met=[]
-for f in files:
-	if f[:3]==usr_location:
-		file_met.append(casedir+'/'+f)
+
 name_field=['press','temp','rh','wspd','wdir','precip','mixr']
-if usr_location=='bby':
-	index_field=[3,6,9,10,12,17,26]
-	locname='Bodega Bay'
-	locelevation = 15 # [m]
-elif usr_location=='czc':
-	index_field=[3,4,5,6,8,13,22]
-	locname='Cazadero'
-	locelevation = 462 # [m]
+name={'bby':'BodegaBay','czc':'Cazadero'}
+elev={'bby':15,'czc':462}
 
-def main():
+if usr_case in ['1','2']:
+	index_field={'bby':[4,5,11,6,7,12,14],'czc':[4,5,11,6,7,12,14]}
+elif usr_case in ['3','4','5','6','7']: 
+	index_field={'bby':[3,6,9,10,12,17,26],'czc':[3,4,5,6,8,13,22]}
+else:
+	index_field={'bby':[4,5,6,7,9,14,16],'czc':[4,5,6,7,9,14,16]}
 
-	df=[]
-	for f in file_met:
-		df.append(mf.parse_surface(f,index_field,name_field,locelevation))
+file_met=[]
+try :
+	if sys.argv[1]=='compare':
+		for f in files:
+			file_met.append(casedir+'/'+f)
+		usr_loc=None
+except IndexError:
+	usr_loc = raw_input('\nIndicate location (i.e. bby): ')	
+	for f in files:
+		if f[:3]==usr_loc:
+			file_met.append(casedir+'/'+f)
 
-	if len(df)>1:
-		meteo=pd.concat(df)
+
+def main(option):
+
+	if option=='compare':
+		dfBBY=[]
+		dfCZD=[]
+		for f in file_met:
+			loc=f[-12:-9]
+			if loc=='bby':
+				dfBBY.append(mf.parse_surface(f,index_field[loc],name_field,elev[loc]))
+			elif loc=='czc':
+				dfCZD.append(mf.parse_surface(f,index_field[loc],name_field,elev[loc]))
+
+		if len(dfBBY)>1:
+			meteoBBY=pd.concat(dfBBY)
+		else:
+			meteoBBY=dfBBY[0]	
+
+		if len(dfCZD)>1:
+			meteoCZD=pd.concat(dfCZD)
+		else:
+			meteoCZD=dfCZD[0]	
+
+		make_compare(BBY=meteoBBY,CZD=meteoCZD)
+
 	else:
-		meteo=df[0]
 
-	make_meteo(meteo)
-	make_thermo(meteo)
+		df=[]
+		for f in file_met:
+			df.append(mf.parse_surface(f,index_field[usr_loc],name_field,elev[usr_loc]))
+		
+		if len(df)>1:
+			meteo=pd.concat(df)
+		else:
+			meteo=df[0]
+
+		make_meteo(meteo)
+		make_thermo(meteo)
+
+	# plt.show()
+	plt.show(block=False)
 
 def make_meteo(meteo):
 
@@ -96,7 +137,7 @@ def make_meteo(meteo):
 	ax[3].set_xlabel(r'$\Leftarrow$'+' Time (UTC)')
 	ax[3].set_ylim([0,12])	
 
-	l1='Surface meteorology at '+ locname
+	l1='Surface meteorology at '+ name[usr_loc]
 	l2='\nStart time: '+x[0].strftime('%Y-%m-%d %H:%M')+' UTC'
 	l3='\nEnd time: '+x[-1].strftime('%Y-%m-%d %H:%M')+' UTC'
 	fig.suptitle(l1+l2+l3,y=0.98)
@@ -130,7 +171,7 @@ def make_thermo(meteo):
 	ax[2].set_ylim([4.,8.5])
 
 	
-	l1='Surface meteorology at '+ locname
+	l1='Surface meteorology at '+ name[usr_loc]
 	l2='\nStart time: '+x[0].strftime('%Y-%m-%d %H:%M')+' UTC'
 	l3='\nEnd time: '+x[-1].strftime('%Y-%m-%d %H:%M')+' UTC'
 	fig.suptitle(l1+l2+l3,y=0.98)
@@ -138,13 +179,43 @@ def make_thermo(meteo):
 	plt.draw()
 
 def add_second_yaxis(ax,x,y):
+	
 	axt=ax.twinx()
 	axt.plot(x,y,'g')
 	axt.grid(False)	
 	return axt
 
 
+def make_compare(**kwargs):
 
-main()
-plt.show()
-# plt.show(block=False)
+	bby=kwargs['BBY']
+	czd=kwargs['CZD']
+	
+	''' remove rows with nan '''
+	bby = bby[np.isfinite(bby['preciph'])]
+	czd = czd[np.isfinite(czd['preciph'])]
+
+	print bby
+
+	bby_precip = bby.preciph
+	czd_precip = czd.preciph
+
+	x = bby.index
+
+	labsize=15
+	fig,ax = plt.subplots()
+	ax.plot(x+pd.Timedelta('30 minutes'), bby_precip,'-o')
+	# ax.plot(x+pd.Timedelta('30 minutes'), czd_precip,'-o')
+	ax.set_ylabel('Rain rate [mm h-1]',color='b',fontsize=labsize)	
+	ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%H'))
+	ax.set_xlabel(r'$\Leftarrow$'+' Time (UTC)')
+	ax.set_ylim([0,12])	
+	ax.invert_xaxis()
+
+
+try:
+	main(sys.argv[1])
+except IndexError:
+	main(None)
+
+# main(sys.argv[1])
