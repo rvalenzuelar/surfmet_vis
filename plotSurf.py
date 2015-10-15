@@ -19,8 +19,8 @@ import numpy as np
 sns.set_color_codes()
 
 ''' set directory and input files '''
-# base_directory='/home/rvalenzuela/SURFACE'
-base_directory='/Users/raulv/Documents/SURFACE'
+base_directory='/home/rvalenzuela/SURFACE'
+# base_directory='/Users/raulv/Documents/SURFACE'
 print base_directory
 usr_case = raw_input('\nIndicate case number (i.e. 1): ')
 case='case'+usr_case.zfill(2)
@@ -201,19 +201,23 @@ def make_compare(**kwargs):
 	xbby = bby.index
 	xczd = czd.index
 
-	# print bby_precip
-	# print czd_precip
+	# print xbby[0]
 
 	labsize=15
 	fig,ax = plt.subplots()
-	ln1=ax.plot(xbby+pd.Timedelta('30 minutes'), bby_precip,'-o')
-	ln2=ax.plot(xczd+pd.Timedelta('30 minutes'), czd_precip,'-o')
-	ax.set_ylabel('Rain rate [mm h-1]',color='b',fontsize=labsize)	
-	ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%H'))
-	ax.set_xlabel(r'$\Leftarrow$'+' Time (UTC)')
+	dt=pd.Timedelta('30 minutes')
+	ln1=ax.plot(xbby+dt, bby_precip,'-o')
+	ln2=ax.plot(xczd+dt, czd_precip,'-o')
+	ax.xaxis.set_major_formatter(mdates.DateFormatter('%d\n%H'))
+	datetext=xbby[0].strftime('%Y-%b')
+	ax.text(0.03,0.95,'Date: '+datetext,weight='bold',size=18,transform=ax.transAxes)
+	ax.set_xlabel(r'$\Leftarrow$'+r'$Time (\frac{D}{H}  UTC)$',fontsize=labsize)
+	ax.set_ylabel('Rain rate [mm h-1]',color='k',fontsize=labsize)	
 	ax.set_ylim([0,22])	
+	ax.set_xlim([xbby[0],xbby[-1]+pd.Timedelta('1 hour')])	
 	ax.invert_xaxis()
-	plt.legend(ln1+ln2,['bby','czd'])
+	plt.legend(ln1+ln2,['BBY','CZD'],prop={'size':18})
+	fig.subplots_adjust(bottom=0.15, top=0.95, left=0.1,right=0.95)
 
 try:
 	main(sys.argv[1])
