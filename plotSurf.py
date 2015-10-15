@@ -39,11 +39,11 @@ name={'bby':'BodegaBay','czc':'Cazadero'}
 elev={'bby':15,'czc':462}
 
 if usr_case in ['1','2']:
-	index_field={'bby':[4,5,11,6,7,12,14],'czc':[4,5,11,6,7,12,14]}
+	index_field={'bby':[3,4,10,5,6,11,13],'czc':[3,4,10,5,6,11,13]}
 elif usr_case in ['3','4','5','6','7']: 
 	index_field={'bby':[3,6,9,10,12,17,26],'czc':[3,4,5,6,8,13,22]}
 else:
-	index_field={'bby':[4,5,6,7,9,14,16],'czc':[4,5,6,7,9,14,16]}
+	index_field={'bby':[3,4,5,6,8,13,15],'czc':[3,4,5,6,8,13,15]}
 
 file_met=[]
 try :
@@ -195,23 +195,25 @@ def make_compare(**kwargs):
 	bby = bby[np.isfinite(bby['preciph'])]
 	czd = czd[np.isfinite(czd['preciph'])]
 
-	print bby
-
 	bby_precip = bby.preciph
 	czd_precip = czd.preciph
 
-	x = bby.index
+	xbby = bby.index
+	xczd = czd.index
+
+	# print bby_precip
+	# print czd_precip
 
 	labsize=15
 	fig,ax = plt.subplots()
-	ax.plot(x+pd.Timedelta('30 minutes'), bby_precip,'-o')
-	# ax.plot(x+pd.Timedelta('30 minutes'), czd_precip,'-o')
+	ln1=ax.plot(xbby+pd.Timedelta('30 minutes'), bby_precip,'-o')
+	ln2=ax.plot(xczd+pd.Timedelta('30 minutes'), czd_precip,'-o')
 	ax.set_ylabel('Rain rate [mm h-1]',color='b',fontsize=labsize)	
 	ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%H'))
 	ax.set_xlabel(r'$\Leftarrow$'+' Time (UTC)')
-	ax.set_ylim([0,12])	
+	ax.set_ylim([0,22])	
 	ax.invert_xaxis()
-
+	plt.legend(ln1+ln2,['bby','czd'])
 
 try:
 	main(sys.argv[1])
