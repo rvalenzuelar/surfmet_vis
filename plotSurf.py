@@ -14,13 +14,14 @@ import Meteoframes as mf
 import os
 import sys
 import numpy as np
+from datetime import datetime
 
 ''' set color codes in seaborn '''
 sns.set_color_codes()
 
 ''' set directory and input files '''
-base_directory='/home/rvalenzuela/SURFACE'
-# base_directory='/Users/raulv/Documents/SURFACE'
+# base_directory='/home/rvalenzuela/SURFACE'
+base_directory='/Users/raulv/Documents/SURFACE'
 print base_directory
 usr_case = raw_input('\nIndicate case number (i.e. 1): ')
 case='case'+usr_case.zfill(2)
@@ -200,8 +201,22 @@ def make_compare(**kwargs):
 
 	xbby = bby.index
 	xczd = czd.index
-
-	# print xbby[0]
+	
+	sptime = raw_input('\nSpecific time? (y/n): ')	
+	if sptime=='y':
+		st = raw_input('Start time? (dd,hh): ').split(',')
+		en = raw_input('End time? (dd,hh): ').split(',')
+		stD=int(st[0])
+		stH=int(st[1])
+		enD=int(en[0])
+		enH=int(en[1])
+		Y=xbby[0].year
+		m=xbby[0].month
+		stidx=np.where(xbby == pd.Timestamp(datetime(Y,m,stD,stH)))
+		enidx=np.where(xbby == pd.Timestamp(datetime(Y,m,enD,enH)))
+	else:
+		stidx=0
+		enidx=-1
 
 	labsize=15
 	fig,ax = plt.subplots()
@@ -211,10 +226,10 @@ def make_compare(**kwargs):
 	ax.xaxis.set_major_formatter(mdates.DateFormatter('%d\n%H'))
 	datetext=xbby[0].strftime('%Y-%b')
 	ax.text(0.03,0.95,'Date: '+datetext,weight='bold',size=18,transform=ax.transAxes)
-	ax.set_xlabel(r'$\Leftarrow$'+r'$Time (\frac{D}{H}  UTC)$',fontsize=labsize)
+	ax.set_xlabel(r'$\Leftarrow$'+'Time (UTC)',fontsize=labsize)
 	ax.set_ylabel('Rain rate [mm h-1]',color='k',fontsize=labsize)	
 	ax.set_ylim([0,22])	
-	ax.set_xlim([xbby[0],xbby[-1]+pd.Timedelta('1 hour')])	
+	ax.set_xlim([xbby[stidx],xbby[enidx]+pd.Timedelta('1 hour')])	
 	ax.invert_xaxis()
 	plt.legend(ln1+ln2,['BBY','CZD'],prop={'size':18})
 	fig.subplots_adjust(bottom=0.15, top=0.95, left=0.1,right=0.95)
