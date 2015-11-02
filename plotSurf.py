@@ -20,8 +20,8 @@ from datetime import datetime
 sns.set_color_codes()
 
 ''' set directory and input files '''
-# base_directory='/home/rvalenzuela/SURFACE'
-base_directory='/Users/raulv/Documents/SURFACE'
+base_directory='/home/rvalenzuela/SURFACE'
+# base_directory='/Users/raulv/Documents/SURFACE'
 print base_directory
 usr_case = raw_input('\nIndicate case number (i.e. 1): ')
 case='case'+usr_case.zfill(2)
