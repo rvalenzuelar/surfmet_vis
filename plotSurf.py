@@ -42,7 +42,7 @@ elev={'bby':15,'czc':462}
 if usr_case in ['1','2']:
 	index_field={'bby':[3,4,10,5,6,11,13],'czc':[3,4,10,5,6,11,13]}
 elif usr_case in ['3','4','5','6','7']: 
-	index_field={'bby':[3,6,9,10,12,17,26],'czc':[3,4,5,6,8,13,22]}
+	index_field={'bby':[3,5,8,10,12,17,26],'czc':[3,4,5,6,8,13,22]}
 else:
 	index_field={'bby':[3,4,5,6,8,13,15],'czc':[3,4,5,6,8,13,15]}
 
@@ -97,8 +97,8 @@ def main(option):
 		make_meteo(meteo)
 		make_thermo(meteo)
 
-	# plt.show()
-	plt.show(block=False)
+	plt.show()
+	# plt.show(block=False)
 
 def make_meteo(meteo):
 
@@ -110,7 +110,7 @@ def make_meteo(meteo):
 	press = meteo.press
 	precip = meteo.preciph
 	slp = meteo.sea_levp/100 # [hPa]
-
+	
 	labsize=15
 	fig, ax = plt.subplots(4,sharex=True,figsize=(8.5,11))
 	ax[0].plot(x , temp)	
