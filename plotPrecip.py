@@ -7,23 +7,46 @@ import os
 import numpy as np
 import statsmodels.api as sm
 
-from datetime import datetime
+from datetime import datetime,timedelta
 from glob import glob
+from matplotlib.backends.backend_pdf import PdfPages
 
-# base_directory='/home/rvalenzuela/SURFACE'
-base_directory='/Users/raulv/Documents/SURFACE'
+base_directory='/home/rvalenzuela/SURFACE'
+# base_directory='/Users/raulv/Documents/SURFACE'
 usr_case=[] # set within get_index_field
 
 def main():
 
-
+	# global usr_case
 	# plot_compare_accum(period=True)
 
-	plot_compare_sum(minutes=60, period=True)
 
-	plt.show(block=False)
+	# fig,ax=plt.subplots(2,1,figsize=(7,11))
+	# plot_compare_sum(ax=ax[0],minutes=30, period=True)
+	# plot_regression(ax=ax[1],minutes=30, period=True)
+	# plt.show(block=False)
 
 
+
+	# ppsurf=PdfPages('surf_precipsum_multipage.pdf')
+	# ncases=range(1,15)
+	# # ncases=[1,2,3]
+	# for c in ncases:
+	# 	fig,ax=plt.subplots()
+	# 	plot_compare_sum(ax=ax,usr_case=str(c), ylim=[0,14], minutes=30, period=True)
+	# 	ppsurf.savefig()
+	# 	plt.close('all')
+	# ppsurf.close()
+
+	# ppsurf=PdfPages('surf_precipreg_multipage.pdf')
+	# ncases=range(1,15)
+	# # ncases=[1,2,3]
+	# for c in ncases:
+	# 	fig,ax=plt.subplots()
+	# 	plot_regression(ax=ax,usr_case=str(c), minutes=30, period=True)
+	# 	ppsurf.savefig()
+	# 	plt.close('all')
+	# ppsurf.close()
 
 
 def plot_compare_accum(**kwargs):
@@ -43,7 +66,6 @@ def plot_compare_accum(**kwargs):
 		inix=0
 		endx=-1
 
-
 	bby_paccum=bby[inix:endx].precip.cumsum()
 	czd_paccum=czd[inix:endx].precip.cumsum()
 
@@ -58,7 +80,6 @@ def plot_compare_accum(**kwargs):
 	plt.suptitle('Accumulated precip case '+usr_case)
 	plt.draw()
 
-
 	fig,ax=plt.subplots()
 	ax.scatter(bby_paccum, czd_paccum, color='blue', s=30, edgecolor='None',alpha=0.9)
 	ax.plot(range(len(bby_paccum)),color='black',linestyle='--',linewidth=3)
@@ -72,63 +93,100 @@ def plot_compare_accum(**kwargs):
 	plt.draw()
 
 
+def plot_compare_sum(ax=None,usr_case=None,ylim=None,**kwargs):
 
+	if ax is None:
+		ax=plt.gca()
 
-
-def plot_compare_sum(**kwargs):
-
-	global usr_case
-
-	bby,czd = get_data()
+	bby,czd,usr_case = get_data(usr_case)
 	minutes=kwargs['minutes']
 	period=kwargs['period']
 	timeg=pd.TimeGrouper(str(minutes)+'T')
 	bbyg = bby.precip.groupby(timeg).sum()
 	czdg = czd.precip.groupby(timeg).sum()
 	
+	'representative time is half the period grouped'
+	timed = timedelta(minutes=minutes/2)
 
-	fig,ax=plt.subplots(2,1,figsize=(7,11))
-	xg=bbyg.index
-	ln1=ax[0].plot(xg, bbyg,'-o')
-	ln2=ax[0].plot(xg, czdg,'-o')
-	ax[0].xaxis.set_major_formatter(mdates.DateFormatter('%d\n%H'))
-	datetext=xg[0].strftime('%Y-%b')
-	freqtext=' Frequency: '+str(minutes)+' minutes'
+	xg=bbyg.index+timed
+	ln1=ax.plot(xg, bbyg,'-o')
+	ln2=ax.plot(xg, czdg,'-o')
+	ax.xaxis.set_major_formatter(mdates.DateFormatter('%d\n%H'))
 	labsize=15
-	ax[0].set_xlabel(r'$\Leftarrow$'+'Time (UTC)',fontsize=labsize)
-	ax[0].set_ylabel('Rain rate [mm freq-1]',color='k',fontsize=labsize)	
-	ax[0].grid()
+	ax.set_xlabel(r'$\Leftarrow$'+'Time (UTC)',fontsize=labsize)
+	ax.set_ylabel('Rain rate [mm freq-1]',color='k',fontsize=labsize)	
+	ax.grid()
 	if period:
 		period = get_request_dates(usr_case)
 		ini = period['ini']
 		end = period['end']
 		inix = bbyg.index.get_loc(datetime(ini[0],ini[1],ini[2],ini[3],0))
 		endx = bbyg.index.get_loc(datetime(end[0],end[1],end[2],end[3],0))
-		ax[0].set_xlim([xg[inix], xg[endx]])
+		ax.set_xlim([xg[inix]-timed, xg[endx]-timed])
 		y=bbyg[inix:endx+1].values
 		x=czdg[inix:endx+1].values
 		reg = get_regression(x,y)
 		bbyg=bbyg.ix[inix:endx+1]
 		czdg=czdg.ix[inix:endx+1]
-	ax[0].invert_xaxis()
-	plt.suptitle('Date: '+datetext+freqtext)
-	ax[0].legend(ln1+ln2,['BBY','CZD'],prop={'size':18})
+	ax.invert_xaxis()
+	if ylim is not None:
+		ax.set_ylim([ylim[0], ylim[1]])
+	datetext=xg[0].strftime('%Y-%b')
+	freqtext=' Frequency: '+str(minutes)+' minutes'		
+	plt.suptitle('Case '+usr_case+' date: '+datetext+freqtext)
+	if usr_case=='1':
+		ax.legend(ln1+ln2,['BBY','CZD'],prop={'size':18},loc='best')
 	plt.subplots_adjust(bottom=0.15, top=0.95, left=0.1,right=0.95)
 
 
-	ax[1].scatter(bbyg,czdg,color='blue')
+def plot_regression(ax=None,usr_case=None,**kwargs):
+
+	if ax is None:
+		ax=plt.gca()
+
+	bby,czd,usr_case = get_data(usr_case)
+	minutes=kwargs['minutes']
+	period=kwargs['period']
+	timeg=pd.TimeGrouper(str(minutes)+'T')
+	bbyg = bby.precip.groupby(timeg).sum()
+	czdg = czd.precip.groupby(timeg).sum()
+
+	'representative time is half the period grouped'
+	timed = timedelta(minutes=minutes/2)
+
+	xg=bbyg.index+timed
+	if period:
+		period = get_request_dates(usr_case)
+		ini = period['ini']
+		end = period['end']
+		inix = bbyg.index.get_loc(datetime(ini[0],ini[1],ini[2],ini[3],0))
+		endx = bbyg.index.get_loc(datetime(end[0],end[1],end[2],end[3],0))
+		y=bbyg[inix:endx].values
+		x=czdg[inix:endx].values
+		reg = get_regression(x,y)
+		bbyg=bbyg.ix[inix:endx]
+		czdg=czdg.ix[inix:endx]
+
+	ax.scatter(bbyg,czdg,color='blue')
 	bbyg_max=np.max(bbyg)
 	czdg_max=np.max(czdg)
 	regtext='m={:3.2f}, Rsq={:3.2f}, n={:d}'.format(reg[0],reg[1],reg[2])
-	ax[1].text(0.4,0.1,regtext,weight='bold', size=18, transform=ax[1].transAxes)
+	str_times=xg[inix].strftime('%dT%H:00 - ')+xg[endx].strftime('%dT%H:00 UTC')
+	ax.text(0.3,0.95,str_times, size=15, transform=ax.transAxes)
+	ax.text(0.4,0.1,regtext,weight='bold', size=18, transform=ax.transAxes)
 	vmax=int(np.ceil(np.maximum(bbyg_max,czdg_max)))
-	ax[1].plot(range(-1,vmax+1),range(-1,vmax+1),color='black')
-	ax[1].set_xlim([-0.1,vmax])
-	ax[1].set_ylim([-0.1,vmax])
-	ax[1].set_xlabel('BBY')
-	ax[1].set_ylabel('CZD')
-	ax[1].grid()
-	plt.subplots_adjust(bottom=0.05)
+	ax.plot(range(-1,15),range(-1,15),color='black')
+	ax.set_xlim([-0.1,vmax])
+	ax.set_ylim([-0.1,vmax])
+	ax.set_xlabel('BBY')
+	ax.set_ylabel('CZD')
+	ax.grid()
+	ax.set_xlim([-0.5,14])
+	ax.set_ylim([-0.5,14])
+	datetext=xg[0].strftime('%Y-%b')
+	freqtext=' Frequency: '+str(minutes)+' minutes'		
+	plt.suptitle('Case '+usr_case+' date: '+datetext+freqtext)	
+	plt.subplots_adjust(bottom=0.1, top=0.95, left=0.1,right=0.95)
 
 def plot_compare_hourly(**kwargs):
 
@@ -177,11 +235,9 @@ def plot_compare_hourly(**kwargs):
 	plt.legend(ln1+ln2,['BBY','CZD'],prop={'size':18})
 	fig.subplots_adjust(bottom=0.15, top=0.95, left=0.1,right=0.95)
 
-def get_files():
+def get_files(usr_case=None):
 
-	global usr_case
-
-	if not usr_case:
+	if usr_case is None:
 		print base_directory
 		usr_case = raw_input('\nIndicate case number (i.e. 1): ')
 
@@ -189,7 +245,7 @@ def get_files():
 	casedir=base_directory+'/'+case
 	out=glob(casedir+'/*.met')
 	out.sort()
-	return out
+	return out,usr_case
 
 def get_index_field(usr_case):
 	
@@ -204,9 +260,9 @@ def get_index_field(usr_case):
 
 	return index_field, name_field
 
-def get_data():
+def get_data(usr_case=None):
 
-	file_met=get_files()
+	file_met,usr_case=get_files(usr_case)
 	index_field, name_field = get_index_field(usr_case)
 	dfBBY=[]
 	dfCZD=[]
@@ -228,9 +284,10 @@ def get_data():
 	else:
 		meteoCZD=dfCZD[0]	
 
-	return meteoBBY, meteoCZD
+	return meteoBBY, meteoCZD, usr_case
 
 def get_request_dates(usr_case):
+
 
 	reqdates={ '1': {'ini':[1998,1,18,15],'end':[1998,1,18,20]},
 				'2': {'ini':[1998,1,26,4],'end':[1998,1,26,9]},
