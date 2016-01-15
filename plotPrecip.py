@@ -15,9 +15,7 @@ base_directory='/home/rvalenzuela/SURFACE'
 # base_directory='/Users/raulv/Documents/SURFACE'
 usr_case=[] # set within get_index_field
 
-def main(plot=True):
-
-	global usr_case
+def main(plot=False):
 
 	if plot:
 
@@ -269,11 +267,15 @@ def get_files(usr_case=None):
 def get_index_field(usr_case):
 	
 	if usr_case in ['1','2']:
-		index_field={'bby':[3,4,10,5,6,11,13],'czc':[3,4,10,5,6,11,13]}
+		index_field={	'bby':[3,4,10,5,6,11,13],
+						'czc':[3,4,10,5,6,11,13]}
 	elif usr_case in ['3','4','5','6','7']: 
-		index_field={'bby':[3,5,8,10,12,17,26],'czc':[3,4,5,6,8,13,22]}
+		index_field={	'bby':[3,5,8,10,12,17,26],
+						'czc':[3,4,5,6,8,13,22]}
 	else:
-		index_field={'bby':[3,4,5,6,8,13,15],'czc':[3,4,5,6,8,13,15]}
+		index_field={	'bby':[3,4,5,6,8,13,15],
+						'czc':[3,4,5,6,8,13,15],
+						'frs':[3,4,5,6,8,13,15]}
 
 	name_field=['press','temp','rh','wspd','wdir','precip','mixr']
 
@@ -285,13 +287,19 @@ def get_data(usr_case=None):
 	index_field, name_field = get_index_field(usr_case)
 	dfBBY=[]
 	dfCZD=[]
+	dfFRS=[]
 	# period = get_request_dates(usr_case)
 	for f in file_met:
 		loc=f[-12:-9]
 		if loc=='bby':
-			dfBBY.append(mf.parse_surface(f,index_field[loc],name_field,15))
+			elev=15
+			dfBBY.append(mf.parse_surface(f,index_field[loc],name_field,elev))
 		elif loc=='czc':
-			dfCZD.append(mf.parse_surface(f,index_field[loc],name_field,462))
+			elev=462
+			dfCZD.append(mf.parse_surface(f,index_field[loc],name_field,elev))
+		elif loc=='frs':
+			elev=462
+			dfFRS.append(mf.parse_surface(f,index_field[loc],name_field,elev))
 
 	if len(dfBBY)>1:
 		meteoBBY=pd.concat(dfBBY)
@@ -303,7 +311,17 @@ def get_data(usr_case=None):
 	else:
 		meteoCZD=dfCZD[0]	
 
-	return meteoBBY, meteoCZD, usr_case
+	if len(dfFRS)>1:
+		meteoFRS=pd.concat(dfFRS)
+	else:
+		try:
+			meteoFRS=dfFRS[0]	
+		except IndexError:
+			index = meteoBBY.index
+			columns = meteoBBY.columns
+			meteoFRS=pd.DataFrame(index=index, columns=columns)
+
+	return meteoBBY, meteoCZD, meteoFRS, usr_case
 
 def request_dates_5h(usr_case):
 
