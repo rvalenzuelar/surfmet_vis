@@ -36,8 +36,8 @@ for f in out:
 		files.append(f)
 
 name_field=['press','temp','rh','wspd','wdir','precip','mixr']
-name={'bby':'BodegaBay','czc':'Cazadero'}
-elev={'bby':15,'czc':462}
+name={'bby':'BodegaBay','czc':'Cazadero','frs':'Fort Ross'}
+elev={'bby':15,'czc':462, 'frs':45}
 
 if usr_case in ['1','2']:
 	index_field={'bby':[3,4,10,5,6,11,13],'czc':[3,4,10,5,6,11,13]}
@@ -67,9 +67,11 @@ def main(option):
 		for f in file_met:
 			loc=f[-12:-9]
 			if loc=='bby':
-				dfBBY.append(mf.parse_surface(f,index_field[loc],name_field,elev[loc]))
+				# dfBBY.append(mf.parse_surface(f,index_field[loc],name_field,elev[loc]))
+				dfBBY.append(mf.parse_surface(f))
 			elif loc=='czc':
-				dfCZD.append(mf.parse_surface(f,index_field[loc],name_field,elev[loc]))
+				# dfCZD.append(mf.parse_surface(f,index_field[loc],name_field,elev[loc]))
+				dfCZD.append(mf.parse_surface(f))
 
 		if len(dfBBY)>1:
 			meteoBBY=pd.concat(dfBBY)
@@ -87,7 +89,8 @@ def main(option):
 
 		df=[]
 		for f in file_met:
-			df.append(mf.parse_surface(f,index_field[usr_loc],name_field,elev[usr_loc]))
+			# df.append(mf.parse_surface(f,index_field[usr_loc],name_field,elev[usr_loc]))
+			df.append(mf.parse_surface(f))
 		
 		if len(df)>1:
 			meteo=pd.concat(df)
@@ -115,8 +118,7 @@ def make_meteo(meteo):
 	fig, ax = plt.subplots(4,sharex=True,figsize=(8.5,11))
 	ax[0].plot(x , temp)	
 	ax[0].set_ylabel('Temperature [C]',color='b',fontsize=labsize)
-	ax[0].invert_xaxis()
-	ax[0].set_ylim([3,13])
+	# ax[0].set_ylim([3,13])
 	ax2=add_second_yaxis(ax[0], x, rh)
 	ax2.set_ylabel('RH [%]',color='g',fontsize=labsize)
 	ax2.set_ylim([50,105])
@@ -127,17 +129,22 @@ def make_meteo(meteo):
 	ax2.set_ylabel('WDIR [deg]',color='g',fontsize=labsize)	
 	ax2.set_ylim([50,350])	
 	ax[2].plot(x, press)
-	ax[2].set_ylim([1015,1025])	
+	# ax[2].set_ylim([1015,1025])	
 	ax[2].set_ylabel('Pressure [hPa]',color='b',fontsize=labsize)		
 	ax[2].yaxis.set_major_formatter(mticker.ScalarFormatter(useOffset=False))
 	ax2=add_second_yaxis(ax[2], x , slp)
 	ax2.set_ylabel('Sea level pressure [hPa]',color='g',fontsize=labsize)	
-	ax2.set_ylim([1015,1025])
+	# ax2.set_ylim([1015,1025])
 	ax[3].plot(x+pd.Timedelta('30 minutes'), precip,'o')
 	ax[3].set_ylabel('Rain rate [mm h-1]',color='b',fontsize=labsize)	
 	ax[3].xaxis.set_major_formatter(mdates.DateFormatter('%d-%H'))
 	ax[3].set_xlabel(r'$\Leftarrow$'+' Time (UTC)')
-	ax[3].set_ylim([0,12])	
+	ax[3].set_ylim([0,12])
+
+	# print x
+	ax[3].set_xlim([x[0], x[-1]])
+	ax[3].invert_xaxis()
+
 
 	l1='Surface meteorology at '+ name[usr_loc]
 	l2='\nStart time: '+x[0].strftime('%Y-%m-%d %H:%M')+' UTC'
@@ -170,7 +177,7 @@ def make_thermo(meteo):
 	# ax[3].set_ylabel('Rain rate [mm h-1]',color='b',fontsize=labsize)	
 	ax[2].xaxis.set_major_formatter(mdates.DateFormatter('%d-%H'))
 	ax[2].set_xlabel(r'$\Leftarrow$'+' Time (UTC)')
-	ax[2].set_ylim([4.,8.5])
+	# ax[2].set_ylim([4.,8.5])
 
 	
 	l1='Surface meteorology at '+ name[usr_loc]

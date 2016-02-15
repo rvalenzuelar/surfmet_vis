@@ -15,7 +15,7 @@ base_directory='/home/rvalenzuela/SURFACE'
 # base_directory='/Users/raulv/Documents/SURFACE'
 usr_case=[] # set within get_index_field
 
-def main(plot=False):
+def main(plot=True):
 
 	if plot:
 
@@ -33,8 +33,8 @@ def main(plot=False):
 		# plot_regression(ax=ax[1],minutes=30, period='significant')				
 		# plt.show(block=False)
 
-		ppsurf=PdfPages('surf_precipsum_significant_60min.pdf')
-		ncases=range(1,15)
+		ppsurf=PdfPages('surf_precip_ground_cases_60min.pdf')
+		ncases=range(8,15)
 		# ncases=[1,2,3]
 		for c in ncases:
 			fig,ax=plt.subplots()
@@ -98,19 +98,22 @@ def plot_compare_sum(ax=None,usr_case=None,ylim=None,**kwargs):
 	if ax is None:
 		ax=plt.gca()
 
-	bby,czd,usr_case = get_data(usr_case)
+	bby,czd,frs,usr_case = get_data(usr_case)
 	minutes=kwargs['minutes']
 	period=kwargs['period']
 	timeg=pd.TimeGrouper(str(minutes)+'T')
 	bbyg = bby.precip.groupby(timeg).sum()
 	czdg = czd.precip.groupby(timeg).sum()
-	
+
 	'representative time is half the period grouped'
 	timed = timedelta(minutes=minutes/2)
 
 	xg=bbyg.index+timed
 	ln1=ax.plot(xg, bbyg,'-o')
 	ln2=ax.plot(xg, czdg,'-o')
+	if usr_case in ['8','9','10','11','12','13','14']:
+		frsg = frs.precip.groupby(timeg).sum()
+		ln3=ax.plot(xg, frsg,'-o')
 	ax.xaxis.set_major_formatter(mdates.DateFormatter('%d\n%H'))
 	labsize=15
 	ax.set_xlabel(r'$\Leftarrow$'+'Time (UTC)',fontsize=labsize)
@@ -125,12 +128,10 @@ def plot_compare_sum(ax=None,usr_case=None,ylim=None,**kwargs):
 		end = datetime(*(period['end']+[0]))
 		inix = bbyg.index.get_loc(ini)
 		endx = bbyg.index.get_loc(end)
-		ax.set_xlim([xg[inix]-timed, xg[endx]-timed])
-		y=bbyg[inix:endx+1].values
-		x=czdg[inix:endx+1].values
-		reg = get_regression(x,y)
-		bbyg=bbyg.ix[inix:endx+1]
-		czdg=czdg.ix[inix:endx+1]
+
+		xticks=pd.date_range(ini,end,freq='3H')
+		ax.set_xticks(xticks)
+		ax.set_xlim([ini-timed, end+timed])
 
 	ax.invert_xaxis()
 	if ylim is not None:
@@ -138,8 +139,11 @@ def plot_compare_sum(ax=None,usr_case=None,ylim=None,**kwargs):
 	datetext=xg[0].strftime('%Y-%b')
 	freqtext=' Frequency: '+str(minutes)+' minutes'		
 	plt.suptitle('Case '+usr_case+' date: '+datetext+freqtext)
-	if usr_case=='1':
-		ax.legend(ln1+ln2,['BBY','CZD'],prop={'size':18},loc='best')
+
+	# if usr_case in '1':
+	ax.legend(ln1+ln2,['BBY','CZD'],prop={'size':18},loc='best')
+	if ln3:
+		ax.legend(ln1+ln2+ln3,['BBY','CZD','FRS'],prop={'size':18},loc='best')
 	plt.subplots_adjust(bottom=0.15, top=0.95, left=0.1,right=0.95)
 
 
@@ -359,13 +363,13 @@ def request_dates_significant(usr_case):
 				'5': {'ini':[2001,2,9,8],'end':[2001,2,10,14]},
 				'6': {'ini':[2001,2,11,2],'end':[2001,2,11,13]},
 				'7': {'ini':[2001,2,17,11],'end':[2001,2,17,23]},
-				'8': {'ini':[2003,1,12,10],'end':[2003,1,14,13]},
-				'9': {'ini':[2003,1,21,4],'end':[2003,1,23,8]},
-				'10': {'ini':[2003,2,15,20],'end':[2003,2,16,10]},
-				'11': {'ini':[2004,1,9,14],'end':[2004,1,9,23]},
-				'12': {'ini':[2004,2,2,9],'end':[2004,2,2,23]},
+				'8': {'ini':[2003,1,12,0],'end':[2003,1,14,15]},
+				'9': {'ini':[2003,1,21,0],'end':[2003,1,23,8]},
+				'10': {'ini':[2003,2,15,0],'end':[2003,2,16,10]},
+				'11': {'ini':[2004,1,9,0],'end':[2004,1,9,23]}, #end is last in obs
+				'12': {'ini':[2004,2,2,0],'end':[2004,2,2,23]}, #end is last in obs
 				'13': {'ini':[2004,2,16,6],'end':[2004,2,18,6]},
-				'14': {'ini':[2004,2,25,6],'end':[2004,2,25,19]}
+				'14': {'ini':[2004,2,25,0],'end':[2004,2,25,23]} #end is last in obs
 				}	
 
 	return reqdates[usr_case]
