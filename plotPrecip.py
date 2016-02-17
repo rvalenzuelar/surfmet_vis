@@ -33,15 +33,15 @@ def main(plot=True):
 		# plot_regression(ax=ax[1],minutes=30, period='significant')				
 		# plt.show(block=False)
 
-		ppsurf=PdfPages('surf_precip_ground_cases_60min.pdf')
-		ncases=range(8,15)
-		# ncases=[1,2,3]
-		for c in ncases:
-			fig,ax=plt.subplots()
-			plot_compare_sum(ax=ax,usr_case=str(c), ylim=[0,22], minutes=60, period='significant')
-			ppsurf.savefig()
-			plt.close('all')
-		ppsurf.close()
+		# ppsurf=PdfPages('surf_precip_ground_cases_60min.pdf')
+		# ncases=range(8,15)
+		# # ncases=[1,2,3]
+		# for c in ncases:
+		# 	fig,ax=plt.subplots()
+		# 	plot_compare_sum(ax=ax,usr_case=str(c), ylim=[0,22], minutes=60, period='significant')
+		# 	ppsurf.savefig()
+		# 	plt.close('all')
+		# ppsurf.close()
 
 		# ppsurf=PdfPages('surf_precipreg_multipage.pdf')
 		# ncases=range(1,15)
@@ -53,6 +53,12 @@ def main(plot=True):
 		# 	plt.close('all')
 		# ppsurf.close()
 
+
+		ncases=range(8,15)
+		for c in ncases:
+			fig,ax=plt.subplots()
+			plot_compare_sum(ax=ax,usr_case=str(c), ylim=[0,22], minutes=60, period='significant')
+		plt.show(block=False)
 
 def plot_compare_accum(ax=None, usr_case=None,**kwargs):
 
@@ -108,12 +114,16 @@ def plot_compare_sum(ax=None,usr_case=None,ylim=None,**kwargs):
 	'representative time is half the period grouped'
 	timed = timedelta(minutes=minutes/2)
 
+	bbylab='BBY (total {:2.1f} mm)'
+	czdlab='CZD (total {:2.1f} mm)'
+	frslab='FRS (total {:2.1f} mm)'
+
 	xg=bbyg.index+timed
-	ln1=ax.plot(xg, bbyg,'-o')
-	ln2=ax.plot(xg, czdg,'-o')
+	ln1=ax.plot(xg, bbyg,'-o', label=bbylab.format(bbyg.sum()))
+	ln2=ax.plot(xg, czdg,'-o', label=czdlab.format(czdg.sum()))
 	if usr_case in ['8','9','10','11','12','13','14']:
 		frsg = frs.precip.groupby(timeg).sum()
-		ln3=ax.plot(xg, frsg,'-o')
+		ln3=ax.plot(xg, frsg,'-o', label=frslab.format(frsg.sum()))
 	ax.xaxis.set_major_formatter(mdates.DateFormatter('%d\n%H'))
 	labsize=15
 	ax.set_xlabel(r'$\Leftarrow$'+'Time (UTC)',fontsize=labsize)
@@ -143,7 +153,8 @@ def plot_compare_sum(ax=None,usr_case=None,ylim=None,**kwargs):
 	# if usr_case in '1':
 	ax.legend(ln1+ln2,['BBY','CZD'],prop={'size':18},loc='best')
 	if ln3:
-		ax.legend(ln1+ln2+ln3,['BBY','CZD','FRS'],prop={'size':18},loc='best')
+		# ax.legend(ln1+ln2+ln3,['BBY','CZD','FRS'],prop={'size':18},loc='best')
+		ax.legend(prop={'size':18},loc='best')
 	plt.subplots_adjust(bottom=0.15, top=0.95, left=0.1,right=0.95)
 
 
