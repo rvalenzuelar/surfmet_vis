@@ -11,92 +11,37 @@ from datetime import datetime,timedelta
 from glob import glob
 from matplotlib.backends.backend_pdf import PdfPages
 
-base_directory='/home/rvalenzuela/SURFACE'
+# base_directory='/home/rvalenzuela/SURFACE'
 # base_directory='/Users/raulv/Documents/SURFACE'
-usr_case=[] # set within get_index_field
+base_directory=os.path.expanduser('~')
 
-def main(plot=True):
+def tta_precip():
 
-	if plot:
+	import Windprof2 as wp
 
-		# fig,ax=plt.subplots(2,1,figsize=(6, 8))
-		# plot_compare_accum(ax=ax, period=False)
-		# plt.show(block=False)
-
-		# fig,ax=plt.subplots(2,1,figsize=(7,9))
-		# plot_compare_sum(ax=ax[0],minutes=30, period=None)
-		# plot_regression(ax=ax[1],minutes=30, period=None)
-		# plt.show(block=False)
-
-		# fig,ax=plt.subplots(2,1,figsize=(7,9))
-		# plot_compare_sum(ax=ax[0],minutes=30, period='significant')
-		# plot_regression(ax=ax[1],minutes=30, period='significant')				
-		# plt.show(block=False)
-
-		# ppsurf=PdfPages('surf_precip_ground_cases_60min.pdf')
-		# ncases=range(8,15)
-		# # ncases=[1,2,3]
-		# for c in ncases:
-		# 	fig,ax=plt.subplots()
-		# 	plot_compare_sum(ax=ax,usr_case=str(c), ylim=[0,22], minutes=60, period='significant')
-		# 	ppsurf.savefig()
-		# 	plt.close('all')
-		# ppsurf.close()
-
-		# ppsurf=PdfPages('surf_precipreg_multipage.pdf')
-		# ncases=range(1,15)
-		# # ncases=[1,2,3]
-		# for c in ncases:
-		# 	fig,ax=plt.subplots()
-		# 	plot_regression(ax=ax,usr_case=str(c), minutes=30, period=True)
-		# 	ppsurf.savefig()
-		# 	plt.close('all')
-		# ppsurf.close()
-
-
-		ncases=range(8,15)
-		for c in ncases:
-			fig,ax=plt.subplots()
-			plot_compare_sum(ax=ax,usr_case=str(c), ylim=[0,22], minutes=60, period='significant')
-		plt.show(block=False)
-
-def plot_compare_accum(ax=None, usr_case=None,**kwargs):
-
-
-	bby, czd, usr_case = get_data(usr_case)
-	period=kwargs['period']
-
-	if period:
-		period = get_request_dates(usr_case)
-		ini = datetime(*(period['ini']+[0]))
-		end = datetime(*(period['end']+[0]))
-		inix = bby.index.get_loc(ini)
-		endx = bby.index.get_loc(end)		
-	else:
-		inix=0
-		endx=-1
-
-	bby_paccum=bby[inix:endx].precip.cumsum()
-	czd_paccum=czd[inix:endx].precip.cumsum()
-
-	reg = get_regression(bby_paccum.values,czd_paccum.values)
-	print 'm={:3.2f}, Rsq={:3.2f}, n={:d}'.format(reg[0],reg[1],reg[2])
-
-	ax[0].plot(bby_paccum,label='BBY')
-	ax[0].plot(czd_paccum,label='CZD')
-	ax[0].grid()
-	ax[0].legend(loc=0)
-	ax[0].set_title('Accumulated precip case '+usr_case)
-
-	ax[1].scatter(bby_paccum, czd_paccum, color='blue', s=30, edgecolor='None',alpha=0.9)
-	ax[1].plot(range(len(bby_paccum)),color='black',linestyle='--',linewidth=3)
-	mmax = np.amax([np.max(bby_paccum), np.max(czd_paccum)])
-	ax[1].set_xlim([0,mmax])
-	ax[1].set_ylim([0,mmax])
-	ax[1].set_xlabel('bby')
-	ax[1].set_ylabel('czd')
-	ax[1].grid()
-	ax[1].set_title('Scatter plot precip case '+usr_case)
+	print 'BBY-tta    | BBY-notta | CZD-tta   | CZD-notta | FRS-tta   | FRS-notta '
+	o='{:11.1f} {:11.1f} {:11.1f} {:11.1f} {:11.1f} {:11.1f}'
+	for case in range(8,15):
+		bby,czd,frs,_ = get_data(str(case))
+		tta_times = wp.get_tta_times(case=str(case), continuous=True)
+		if len(tta_times)>0:
+			tta_idx_bby=((bby.index>=tta_times[0]) & (bby.index<=tta_times[-1]))
+			tta_idx_czd=((czd.index>=tta_times[0]) & (czd.index<=tta_times[-1]))
+			tta_idx_frs  =((frs.index>=tta_times[0]) & (frs.index<=tta_times[-1]))
+			bby_tta = bby.precip[tta_idx_bby].sum()
+			bby_notta = bby.precip[~tta_idx_bby].sum()
+			czd_tta = czd.precip[tta_idx_czd].sum()
+			czd_notta = czd.precip[~tta_idx_czd].sum()
+			frs_tta = frs.precip[tta_idx_frs].sum()
+			frs_notta = frs.precip[~tta_idx_frs].sum()			
+		else:
+			bby_tta = -999
+			bby_notta = bby.precip.sum()
+			czd_tta = -999
+			czd_notta = czd.precip.sum()
+			frs_tta = -999
+			frs_notta = frs.precip.sum()
+		print o.format(bby_tta, bby_notta, czd_tta, czd_notta, frs_tta, frs_notta)
 
 
 def plot_compare_sum(ax=None,usr_case=None,ylim=None,**kwargs):
@@ -157,6 +102,42 @@ def plot_compare_sum(ax=None,usr_case=None,ylim=None,**kwargs):
 		ax.legend(prop={'size':18},loc='best')
 	plt.subplots_adjust(bottom=0.15, top=0.95, left=0.1,right=0.95)
 
+def plot_compare_accum(ax=None, usr_case=None,**kwargs):
+
+	bby, czd, usr_case = get_data(usr_case)
+	period=kwargs['period']
+
+	if period:
+		period = get_request_dates(usr_case)
+		ini = datetime(*(period['ini']+[0]))
+		end = datetime(*(period['end']+[0]))
+		inix = bby.index.get_loc(ini)
+		endx = bby.index.get_loc(end)		
+	else:
+		inix=0
+		endx=-1
+
+	bby_paccum=bby[inix:endx].precip.cumsum()
+	czd_paccum=czd[inix:endx].precip.cumsum()
+
+	reg = get_regression(bby_paccum.values,czd_paccum.values)
+	print 'm={:3.2f}, Rsq={:3.2f}, n={:d}'.format(reg[0],reg[1],reg[2])
+
+	ax[0].plot(bby_paccum,label='BBY')
+	ax[0].plot(czd_paccum,label='CZD')
+	ax[0].grid()
+	ax[0].legend(loc=0)
+	ax[0].set_title('Accumulated precip case '+usr_case)
+
+	ax[1].scatter(bby_paccum, czd_paccum, color='blue', s=30, edgecolor='None',alpha=0.9)
+	ax[1].plot(range(len(bby_paccum)),color='black',linestyle='--',linewidth=3)
+	mmax = np.amax([np.max(bby_paccum), np.max(czd_paccum)])
+	ax[1].set_xlim([0,mmax])
+	ax[1].set_ylim([0,mmax])
+	ax[1].set_xlabel('bby')
+	ax[1].set_ylabel('czd')
+	ax[1].grid()
+	ax[1].set_title('Scatter plot precip case '+usr_case)
 
 def plot_regression(ax=None,usr_case=None,period=None,**kwargs):
 
@@ -274,7 +255,7 @@ def get_files(usr_case=None):
 		usr_case = raw_input('\nIndicate case number (i.e. 1): ')
 
 	case='case'+usr_case.zfill(2)
-	casedir=base_directory+'/'+case
+	casedir=base_directory+'/SURFACE/'+case
 	out=glob(casedir+'/*.met')
 	out.sort()
 	return out,usr_case
@@ -394,5 +375,3 @@ def get_regression(x,y):
 	Nobs=int(result.nobs)	
 
 	return [m,Rsq,Nobs]
-
-main()
