@@ -20,8 +20,7 @@ def tta_precip():
 
     import Windprof2 as wp
 
-    print 'BBY-tta    | BBY-notta | CZD-tta   | CZD-notta | FRS-tta   \
-            | FRS-notta '
+    print 'BBY-tta    | BBY-notta | CZD-tta   | CZD-notta | FRS-tta | FRS-notta '
     o = '{:11.1f} {:11.1f} {:11.1f} {:11.1f} {:11.1f} {:11.1f}'
     for case in range(8, 15):
         bby, czd, frs, _ = get_data(str(case))
@@ -50,36 +49,43 @@ def tta_precip():
                        frs_notta)
 
 
-def plot_compare_sum(ax=None, usr_case=None, ylim=None, **kwargs):
+def plot_compare_sum(ax=None, usr_case=None, ylim=None,
+                    minutes=None, period=None,locations=None,
+                    xtickfreq=None):
 
     if ax is None:
         ax = plt.gca()
 
     bby, czd, frs, usr_case = get_data(usr_case)
-    minutes = kwargs['minutes']
-    period = kwargs['period']
     timeg = pd.TimeGrouper(str(minutes) + 'T')
     bbyg = bby.precip.groupby(timeg).sum()
     czdg = czd.precip.groupby(timeg).sum()
 
     'representative time is half the period grouped'
     timed = timedelta(minutes=minutes / 2)
+    onehr = timedelta(hours=1)
 
-    bbylab = 'BBY (total {:2.1f} mm)'
-    czdlab = 'CZD (total {:2.1f} mm)'
-    frslab = 'FRS (total {:2.1f} mm)'
+    bbylab = 'BBY(t:{:2.1f} mm)'
+    czdlab = 'CZD(t:{:2.1f} mm)'
+    frslab = 'FRS(t:{:2.1f} mm)'
 
     xg = bbyg.index + timed
-    ln1 = ax.plot(xg, bbyg, '-o', label=bbylab.format(bbyg.sum()))
-    ln2 = ax.plot(xg, czdg, '-o', label=czdlab.format(czdg.sum()))
-    if usr_case in ['8', '9', '10', '11', '12', '13', '14']:
-        frsg = frs.precip.groupby(timeg).sum()
-        ln3 = ax.plot(xg, frsg, '-o', label=frslab.format(frsg.sum()))
+    if 'bby' in locations:
+        ln1 = ax.plot(xg, bbyg, '-',lw=2, label=bbylab.format(bbyg.sum()))
+    if 'czd' in locations:
+        ln2 = ax.plot(xg, czdg, '-',lw=2, label=czdlab.format(czdg.sum()))
+    if 'frs' in locations:
+        if usr_case in ['8', '9', '10', '11', '12', '13', '14']:
+            frsg = frs.precip.groupby(timeg).sum()
+            ln3 = ax.plot(xg, frsg, '-', label=frslab.format(frsg.sum()))
+    else:
+        ln3=[]
+
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%d\n%H'))
     labsize = 15
     ax.set_xlabel(r'$\Leftarrow$' + 'Time (UTC)', fontsize=labsize)
     ax.set_ylabel('Rain rate [mm freq-1]', color='k', fontsize=labsize)
-    ax.grid()
+    
     if period:
         if period == '5h':
             period = request_dates_5h(usr_case)
@@ -90,9 +96,9 @@ def plot_compare_sum(ax=None, usr_case=None, ylim=None, **kwargs):
         inix = bbyg.index.get_loc(ini)
         endx = bbyg.index.get_loc(end)
 
-        xticks = pd.date_range(ini, end, freq='3H')
+        xticks = pd.date_range(ini, end+onehr, freq=xtickfreq)
         ax.set_xticks(xticks)
-        ax.set_xlim([ini - timed, end + timed])
+        ax.set_xlim([ini - timed, end + timed + onehr])
 
     ax.invert_xaxis()
     if ylim is not None:
@@ -101,13 +107,14 @@ def plot_compare_sum(ax=None, usr_case=None, ylim=None, **kwargs):
     freqtext = ' Frequency: ' + str(minutes) + ' minutes'
     plt.suptitle('Case ' + usr_case + ' date: ' + datetext + freqtext)
 
-    # if usr_case in '1':
-    ax.legend(ln1 + ln2, ['BBY', 'CZD'], prop={'size': 18}, loc='best')
+    ''' add legend '''
+    ax.legend(prop={'size': 12}, loc=2, numpoints=1, handletextpad=0.1)
     if ln3:
-        # ax.legend(ln1+ln2+ln3,['BBY','CZD','FRS'],prop={'size':18},loc='best')
         ax.legend(prop={'size': 18}, loc='best')
+
     plt.subplots_adjust(bottom=0.15, top=0.95, left=0.1, right=0.95)
 
+    return ax
 
 def plot_compare_accum(ax=None, usr_case=None, **kwargs):
 
@@ -363,7 +370,7 @@ def request_dates_5h(usr_case):
 
 
 def request_dates_significant(usr_case):
-    '''     these dates try to avoid discontinuity when possible
+    ''' these dates try to avoid discontinuity when possible
         and periods of no rain at the beginning and end
         of the time series
     '''
@@ -374,16 +381,13 @@ def request_dates_significant(usr_case):
                 '5': {'ini': [2001, 2, 9, 8], 'end': [2001, 2, 10, 14]},
                 '6': {'ini': [2001, 2, 11, 2], 'end': [2001, 2, 11, 13]},
                 '7': {'ini': [2001, 2, 17, 11], 'end': [2001, 2, 17, 23]},
-                '8': {'ini': [2003, 1, 12, 0], 'end': [2003, 1, 14, 15]},
-                '9': {'ini': [2003, 1, 21, 0], 'end': [2003, 1, 23, 8]},
-                '10': {'ini': [2003, 2, 15, 0], 'end': [2003, 2, 16, 10]},
-                # end is last in obs
-                '11': {'ini': [2004, 1, 9, 0], 'end': [2004, 1, 9, 23]},
-                # end is last in obs
-                '12': {'ini': [2004, 2, 2, 0], 'end': [2004, 2, 2, 23]},
-                '13': {'ini': [2004, 2, 16, 6], 'end': [2004, 2, 18, 6]},
-                # end is last in obs
-                '14': {'ini': [2004, 2, 25, 0], 'end': [2004, 2, 25, 23]}
+                '8': {'ini': [2003, 1, 12, 0], 'end': [2003, 1, 14, 23]},
+                '9': {'ini': [2003, 1, 21, 0], 'end': [2003, 1, 23, 23]},
+                '10': {'ini': [2003, 2, 15, 0], 'end': [2003, 2, 16, 23]},
+                '11': {'ini': [2004, 1, 9, 0], 'end': [2004, 1, 9, 23]},# end is last in obs
+                '12': {'ini': [2004, 2, 2, 0], 'end': [2004, 2, 2, 23]}, # end is last in obs
+                '13': {'ini': [2004, 2, 16, 0], 'end': [2004, 2, 18, 23]},
+                '14': {'ini': [2004, 2, 25, 0], 'end': [2004, 2, 25, 23]} # end is last in obs
                 }
 
     return reqdates[usr_case]
