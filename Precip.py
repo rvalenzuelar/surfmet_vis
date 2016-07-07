@@ -3,17 +3,17 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib.dates as mdates
 import Meteoframes as mf
-import os
+#import os
 import numpy as np
 import statsmodels.api as sm
 
 from datetime import datetime, timedelta
 from glob import glob
-from matplotlib.backends.backend_pdf import PdfPages
+#from matplotlib.backends.backend_pdf import PdfPages
 
-# base_directory='/home/rvalenzuela/SURFACE'
-# base_directory='/Users/raulv/Documents/SURFACE'
-base_directory = os.path.expanduser('~')
+
+#base_directory = os.path.expanduser('~')
+base_directory = '/localdata'
 
 
 def tta_precip():
@@ -51,7 +51,7 @@ def tta_precip():
 
 def plot_compare_sum(ax=None, usr_case=None, ylim=None,
                     minutes=None, period=None,locations=None,
-                    xtickfreq=None):
+                    xtickfreq=None,legend_line=1,legend_loc=None):
 
     if ax is None:
         ax = plt.gca()
@@ -71,21 +71,28 @@ def plot_compare_sum(ax=None, usr_case=None, ylim=None,
 
     xg = bbyg.index + timed
     if 'bby' in locations:
-        ln1 = ax.plot(xg, bbyg, '-',lw=2, label=bbylab.format(bbyg.sum()))
+        bbysum = bbyg.sum()
+        ax.plot(xg, bbyg, '-',lw=2,
+                label=bbylab.format(bbysum))
     if 'czd' in locations:
-        ln2 = ax.plot(xg, czdg, '-',lw=2, label=czdlab.format(czdg.sum()))
+        czdsum = czdg.sum()
+        ax.plot(xg, czdg, '-',lw=2,
+                label=czdlab.format(czdsum))
     if 'frs' in locations:
         if usr_case in ['8', '9', '10', '11', '12', '13', '14']:
             frsg = frs.precip.groupby(timeg).sum()
-            ln3 = ax.plot(xg, frsg, '-', label=frslab.format(frsg.sum()))
+            ln3 = ax.plot(xg, frsg, '-',
+                          label=frslab.format(frsg.sum()))
     else:
         ln3=[]
 
+    ''' format axes '''
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%d\n%H'))
     labsize = 15
     ax.set_xlabel(r'$\Leftarrow$' + 'Time (UTC)', fontsize=labsize)
     ax.set_ylabel('Rain rate [mm freq-1]', color='k', fontsize=labsize)
     
+    ''' define period to plot '''
     if period:
         if period == '5h':
             period = request_dates_5h(usr_case)
@@ -93,28 +100,37 @@ def plot_compare_sum(ax=None, usr_case=None, ylim=None,
             period = request_dates_significant(usr_case)
         ini = datetime(*(period['ini'] + [0]))
         end = datetime(*(period['end'] + [0]))
-        inix = bbyg.index.get_loc(ini)
-        endx = bbyg.index.get_loc(end)
+#        inix = bbyg.index.get_loc(ini)
+#        endx = bbyg.index.get_loc(end)
 
         xticks = pd.date_range(ini, end+onehr, freq=xtickfreq)
         ax.set_xticks(xticks)
         ax.set_xlim([ini - timed, end + timed + onehr])
-
+    
+    ''' invert x axis '''
     ax.invert_xaxis()
+    
+    ''' set y limit '''
     if ylim is not None:
         ax.set_ylim([ylim[0], ylim[1]])
+        
+    ''' add suptitle '''
     datetext = xg[0].strftime('%Y-%b')
     freqtext = ' Frequency: ' + str(minutes) + ' minutes'
     plt.suptitle('Case ' + usr_case + ' date: ' + datetext + freqtext)
 
     ''' add legend '''
-    ax.legend(prop={'size': 12}, loc=2, numpoints=1, handletextpad=0.1)
+    ax.legend(prop={'size': 12},
+              numpoints=1,
+              handletextpad=0.1,
+              framealpha=0,
+              handlelength=legend_line,
+              bbox_to_anchor=legend_loc)
     if ln3:
         ax.legend(prop={'size': 18}, loc='best')
 
-    plt.subplots_adjust(bottom=0.15, top=0.95, left=0.1, right=0.95)
 
-    return ax
+    return ax, bbysum,czdsum
 
 def plot_compare_accum(ax=None, usr_case=None, **kwargs):
 
@@ -308,6 +324,7 @@ def get_data(usr_case=None):
     dfCZD = []
     dfFRS = []
     # period = get_request_dates(usr_case)
+
     for f in file_met:
         loc = f[-12:-9]
         if loc == 'bby':
