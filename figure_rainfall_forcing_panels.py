@@ -33,6 +33,10 @@ ax.append(plt.subplot(gs0[4],gid='(e) Feb 2004'))
 ax.append(plt.subplot(gs0[5],gid='(f) Feb 2004'))
 ax.append(plt.subplot(gs0[6],gid='(g) Feb 2004'))
 
+source='/localdata/SURFACE/climatology/'
+matfs = ['avg60_CZC03_nortype.mat',
+         'avg60_CZC04_nortype.mat']    
+
 
 for c in range(7):
     
@@ -40,10 +44,16 @@ for c in range(7):
         legend=True
     else:
         legend=False
+
+    if c in [0,1,2]:
+        matfile=source+matfs[0]
+    else:
+        matfile=source+matfs[1]
+
     
     t0=dates[c]['t0']
     t1=dates[c]['t1']
-    hax = of.plot(ax[c],c,t0,t1,
+    hax = of.plot(ax[c],matfile,t0,t1,
                   legend=legend,add=['bulk','upslope'],
                   legend_loc=(0.7,0.7,0.2,0.2),
                   ylim=[0,dates[c]['vmax']],
@@ -61,11 +71,11 @@ for c in range(7):
             weight='bold',transform=ax[c].transAxes,
             backgroundcolor='w',clip_on=True)
 
-#plt.show()
+plt.show()
 
-fname='/home/raul/Desktop/rainfall_forcing.png'
-plt.savefig(fname, dpi=300, format='png',papertype='letter',
-            bbox_inches='tight')
+#fname='/home/raul/Desktop/rainfall_forcing.png'
+#plt.savefig(fname, dpi=300, format='png',papertype='letter',
+#            bbox_inches='tight')
 
 
 

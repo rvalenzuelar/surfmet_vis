@@ -89,7 +89,9 @@ def plot_compare_sum(ax=None, usr_case=None, ylim=None,
     ''' format axes '''
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%d\n%H'))
     labsize = 15
-    ax.set_xlabel(r'$\Leftarrow$' + 'Time (UTC)', fontsize=labsize)
+#    ax.set_xlabel(r'$\Leftarrow$' + 'Time (UTC)', fontsize=labsize)
+    ax.set_xlabel(r'$\leftarrow UTC \left[\stackrel{day}{time}\right]$',
+                                          fontsize=12)    
     ax.set_ylabel('Rain rate [mm freq-1]', color='k', fontsize=labsize)
     
     ''' define period to plot '''
@@ -103,7 +105,14 @@ def plot_compare_sum(ax=None, usr_case=None, ylim=None,
 #        inix = bbyg.index.get_loc(ini)
 #        endx = bbyg.index.get_loc(end)
 
-        xticks = pd.date_range(ini, end+onehr, freq=xtickfreq)
+        if ini.hour not in [0,12]:
+            delt=np.mod(12,ini.hour)
+            if delt>5:
+                delt=np.mod(24,ini.hour)
+            inix = ini + onehr*delt
+        else:
+            inix = ini
+        xticks = pd.date_range(inix, end+onehr, freq=xtickfreq)
         ax.set_xticks(xticks)
         ax.set_xlim([ini - timed, end + timed + onehr])
     
@@ -138,7 +147,7 @@ def plot_compare_accum(ax=None, usr_case=None, **kwargs):
     period = kwargs['period']
 
     if period:
-        period = get_request_dates(usr_case)
+#        period = get_request_dates(usr_case)
         ini = datetime(*(period['ini'] + [0]))
         end = datetime(*(period['end'] + [0]))
         inix = bby.index.get_loc(ini)
@@ -393,11 +402,11 @@ def request_dates_significant(usr_case):
     '''
     reqdates = {'1': {'ini': [1998, 1, 18, 15], 'end': [1998, 1, 19, 0]},
                 '2': {'ini': [1998, 1, 26, 0], 'end': [1998, 1, 27, 5]},
-                '3': {'ini': [2001, 1, 23, 12], 'end': [2001, 1, 24, 6]},
+                '3': {'ini': [2001, 1, 23, 0], 'end': [2001, 1, 25, 0]},
                 '4': {'ini': [2001, 1, 25, 9], 'end': [2001, 1, 26, 23]},
                 '5': {'ini': [2001, 2, 9, 8], 'end': [2001, 2, 10, 14]},
                 '6': {'ini': [2001, 2, 11, 2], 'end': [2001, 2, 11, 13]},
-                '7': {'ini': [2001, 2, 17, 11], 'end': [2001, 2, 17, 23]},
+                '7': {'ini': [2001, 2, 16, 22], 'end': [2001, 2, 18, 8]},
                 '8': {'ini': [2003, 1, 12, 0], 'end': [2003, 1, 14, 23]},
                 '9': {'ini': [2003, 1, 21, 0], 'end': [2003, 1, 23, 23]},
                 '10': {'ini': [2003, 2, 15, 0], 'end': [2003, 2, 16, 23]},
