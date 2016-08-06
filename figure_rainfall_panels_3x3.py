@@ -63,8 +63,8 @@ for ax in axes:
     
 plt.suptitle('')
 
-#plt.show()
+plt.show()
 
-fname='/home/raul/Desktop/rainfall_singlestorm.png'
-plt.savefig(fname, dpi=300, format='png',papertype='letter',
-            bbox_inches='tight')
+#fname='/home/raul/Desktop/rainfall_singlestorm.png'
+#plt.savefig(fname, dpi=300, format='png',papertype='letter',
+#            bbox_inches='tight')

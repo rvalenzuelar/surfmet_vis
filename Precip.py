@@ -92,7 +92,7 @@ def plot_compare_sum(ax=None, usr_case=None, ylim=None,
 #    ax.set_xlabel(r'$\Leftarrow$' + 'Time (UTC)', fontsize=labsize)
     ax.set_xlabel(r'$\leftarrow UTC \left[\stackrel{day}{time}\right]$',
                                           fontsize=12)    
-    ax.set_ylabel('Rain rate [mm freq-1]', color='k', fontsize=labsize)
+    ax.set_ylabel('Rain rate $[mm h^{-1}]$', color='k', fontsize=labsize)
     
     ''' define period to plot '''
     if period:

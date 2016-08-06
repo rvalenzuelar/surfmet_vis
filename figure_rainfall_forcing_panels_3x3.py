@@ -57,6 +57,7 @@ for c in range(7):
                   legend=legend,add=['bulk','upslope'],
                   legend_loc=(0.7,0.7,0.2,0.2),
                   ylim=[0,dates[c]['vmax']],
+                  xtickfreq='12H',
                   lw=2)
     
     if c not in [0]:
