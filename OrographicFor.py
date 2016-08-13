@@ -39,27 +39,29 @@ def plot(ax,matfile,t0,t1,legend=True, add=None, second_axis=None,
                
     if second_axis is None:
         for a in add:
-            ax.plot(time,targets[a],label=leg_labels[a],lw=lw)
+            ax.plot(time,targets[a],
+                    label=leg_labels[a],
+                    lw=lw)
             txt  = 'Bulk flux $[cm\ m\ s^{-1}]$\n'
             txt += 'Upslope wind $[m\ s^{-1}]$'
-            ax.set_ylabel(txt, color='k', fontsize=labsize)            
+            ax.set_ylabel(txt, color='k', fontsize=labsize) 
+            
     else:
         ax2 = ax.twinx()
         lns = list()
-        for a,c,ylim in zip(add,lcolors,ylims):
+        for a,color,ylim in zip(add,lcolors,ylims):
             if a == second_axis:
                cax   = ax2
             else:
                cax   = ax
-            color = c
             ln = cax.plot(time,targets[a],
                           label=leg_labels[a],
                           lw=lw,
                           color=color)
             lns.append(ln)
             cax.set_ylim(ylim)
-            cax.set_ylabel(y_labels[a], color='k', fontsize=labsize)            
-
+            cax.set_ylabel(y_labels[a], color=color, fontsize=labsize)            
+            cax.tick_params(axis='y', colors=color)
 
 
     ''' format axes '''

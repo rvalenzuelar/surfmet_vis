@@ -51,7 +51,9 @@ def tta_precip():
 
 def plot_compare_sum(ax=None, usr_case=None, ylim=None,
                     minutes=None, period=None,locations=None,
-                    xtickfreq=None,legend_line=1,legend_loc=None):
+                    xtickfreq=None,legend_line=1,
+                    lcolor=['g','r','b'],
+                    legend_loc=None):
 
     if ax is None:
         ax = plt.gca()
@@ -61,22 +63,25 @@ def plot_compare_sum(ax=None, usr_case=None, ylim=None,
     bbyg = bby.precip.groupby(timeg).sum()
     czdg = czd.precip.groupby(timeg).sum()
 
-    'representative time is half the period grouped'
-    timed = timedelta(minutes=minutes / 2)
+
     onehr = timedelta(hours=1)
 
     bbylab = 'BBY(t:{:2.1f} mm)'
     czdlab = 'CZD(t:{:2.1f} mm)'
     frslab = 'FRS(t:{:2.1f} mm)'
 
-    xg = bbyg.index + timed
+    xg = bbyg.index
+    
+#    timed = timedelta(minutes=minutes)    
+#        xg = bbyg.index + timed
+    
     if 'bby' in locations:
         bbysum = bbyg.sum()
-        ax.plot(xg, bbyg, '-',lw=2,
+        ax.plot(xg, bbyg, '-',lw=2, color=lcolor[0],
                 label=bbylab.format(bbysum))
     if 'czd' in locations:
         czdsum = czdg.sum()
-        ax.plot(xg, czdg, '-',lw=2,
+        ax.plot(xg, czdg, '-',lw=2, color=lcolor[1],
                 label=czdlab.format(czdsum))
     if 'frs' in locations:
         if usr_case in ['8', '9', '10', '11', '12', '13', '14']:
@@ -114,7 +119,8 @@ def plot_compare_sum(ax=None, usr_case=None, ylim=None,
             inix = ini
         xticks = pd.date_range(inix, end+onehr, freq=xtickfreq)
         ax.set_xticks(xticks)
-        ax.set_xlim([ini - timed, end + timed + onehr])
+#        ax.set_xlim([ini - timed, end + timed + onehr])
+        ax.set_xlim([ini , end + onehr])
     
     ''' invert x axis '''
     ax.invert_xaxis()

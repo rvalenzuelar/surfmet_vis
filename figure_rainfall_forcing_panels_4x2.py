@@ -8,6 +8,7 @@ import OrographicFor as of
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib import rcParams
+from rv_utilities import discrete_cmap
 
 rcParams['mathtext.default'] = 'sf'
 rcParams['xtick.labelsize'] = 15
@@ -42,6 +43,7 @@ source='/localdata/SURFACE/climatology/'
 matfs = ['avg60_CZC03_nortype.mat',
          'avg60_CZC04_nortype.mat']    
 
+cmap = discrete_cmap(7, base_cmap='Set1')
 
 for c in range(7):
     
@@ -62,7 +64,7 @@ for c in range(7):
                   matfile,t0,t1,
                   legend      = leg_bool,
                   add         = ('bulk','upslope'),
-                  lcolors     = ('b','g'),
+                  lcolors     = (cmap(0),cmap(1)),
                   ylims       = ([0,100], [0,35]),
                   second_axis = 'bulk',
                   lw          = 2,
