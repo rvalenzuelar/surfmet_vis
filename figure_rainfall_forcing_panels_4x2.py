@@ -37,7 +37,7 @@ ax.append(plt.subplot(gs0[2],gid='(c) 15-16Feb03'))
 ax.append(plt.subplot(gs0[3],gid='(d) 09Jan04'))
 ax.append(plt.subplot(gs0[4],gid='(e) 02Feb04'))
 ax.append(plt.subplot(gs0[5],gid='(f) 16-18Feb04'))
-ax.append(plt.subplot(gs0[6],gid='(g) 25-26Feb04'))
+ax.append(plt.subplot(gs0[6],gid='(g) 25Feb04'))
 
 source='/localdata/SURFACE/climatology/'
 matfs = ['avg60_CZC03_nortype.mat',
