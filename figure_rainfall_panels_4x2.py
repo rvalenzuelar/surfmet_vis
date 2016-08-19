@@ -61,7 +61,7 @@ for c,ax in zip(range(7),axes):
                                                 legend_line=legend_line,
                                                 legend_loc=legend_loc)
     if c > 0:
-    	hax.set_ylabel('')
+        hax.set_ylabel('')
 
     if c in [1,3,5]:
         hax.set_yticklabels('')

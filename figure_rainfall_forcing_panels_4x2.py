@@ -69,7 +69,7 @@ for c in range(7):
                   second_axis = 'bulk',
                   lw          = 2,
                   legend_loc  = (0.75,0.7,0.2,0.2),
-                  ylim        = [0, dates[c]['vmax']],
+#                  ylim        = [0, dates[c]['vmax']],
                   xtickfreq   = '12H',
                   )
 
