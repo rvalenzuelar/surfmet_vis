@@ -95,7 +95,7 @@ for c in range(7):
 
 #plt.show()
 
-fname='/home/raul/Desktop/rainfall_forcing.png'
+fname='/home/raul/Desktop/fig_rainfall_forcing.png'
 plt.savefig(fname, dpi=300, format='png',papertype='letter',
             bbox_inches='tight')
 

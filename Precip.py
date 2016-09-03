@@ -66,9 +66,9 @@ def plot_compare_sum(ax=None, usr_case=None, ylim=None,
 
     onehr = timedelta(hours=1)
 
-    bbylab = 'BBY(t:{:2.1f} mm)'
-    czdlab = 'CZD(t:{:2.1f} mm)'
-    frslab = 'FRS(t:{:2.1f} mm)'
+    bbylab = 'BBY({:2.1f} mm)'
+    czdlab = 'CZD({:2.1f} mm)'
+    frslab = 'FRS({:2.1f} mm)'
 
     xg = bbyg.index
     
@@ -343,17 +343,20 @@ def get_data(usr_case=None):
     for f in file_met:
         loc = f[-12:-9]
         if loc == 'bby':
-            elev = 15
-            dfBBY.append(mf.parse_surface(
-                f, index_field[loc], name_field, elev))
+#            elev = 15
+#            dfBBY.append(mf.parse_surface(
+#                f, index_field[loc], name_field, elev))
+            dfBBY.append(mf.parse_surface(f))
         elif loc == 'czc':
-            elev = 462
-            dfCZD.append(mf.parse_surface(
-                f, index_field[loc], name_field, elev))
+#            elev = 462
+#            dfCZD.append(mf.parse_surface(
+#                f, index_field[loc], name_field, elev))
+            dfCZD.append(mf.parse_surface(f))            
         elif loc == 'frs':
-            elev = 462
-            dfFRS.append(mf.parse_surface(
-                f, index_field[loc], name_field, elev))
+#            elev = 462
+#            dfFRS.append(mf.parse_surface(
+#                f, index_field[loc], name_field, elev))
+            dfFRS.append(mf.parse_surface(f))
 
     if len(dfBBY) > 1:
         meteoBBY = pd.concat(dfBBY)

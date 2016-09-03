@@ -29,9 +29,9 @@ def plot(ax,matfile,t0,t1,legend=True, add=None, second_axis=None,
     
     targets = {'bulk':bulk,'iwv':iwv,'upslope':upslp}
     
-    leg_labels  = {'bulk':'Bulk flux (0.85-1.15 km)',
+    leg_labels  = {'bulk':'Bulk flux',
                    'iwv': 'IWV',
-                   'upslope':'Upslope wind (230$^\circ$)'}
+                   'upslope':'Upslope wind'}
                    
     y_labels  = {'bulk':'Bulk flux $[cm\ m\ s^{-1}]$',
                    'iwv': 'IWV',
